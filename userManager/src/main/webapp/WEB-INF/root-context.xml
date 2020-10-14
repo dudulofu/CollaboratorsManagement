@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	 	http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+
+	<!-- Root Context: defines shared resources visible to all other web components -->
+
+	<mvc:annotation-driven />
+
+	<context:component-scan
+		base-package="com.devcases.usermanager" />
+
+	<mvc:resources mapping="/resources/**"
+		location="/resources/" />
+
+	<jdbc:embedded-database id="colab" type="H2">
+		<jdbc:script location="classpath:create_table.sql" />
+		<jdbc:script location="classpath:import_data.sql" />
+	</jdbc:embedded-database>
+
+	<!-- Run H2 web server within application that will access the same in-memory 
+		database -->
+	<bean id="h2Server" class="org.h2.tools.Server"
+		factory-method="createTcpServer" init-method="start"
+		destroy-method="stop" depends-on="h2WebServer">
+		<constructor-arg
+			value="-tcp,-tcpAllowOthers,-tcpPort,9092" />
+	</bean>
+	<bean id="h2WebServer" class="org.h2.tools.Server"
+		factory-method="createWebServer" init-method="start"
+		destroy-method="stop">
+		<constructor-arg
+			value="-web,-webAllowOthers,-webPort,8082" />
+	</bean>
+
+	<bean id="ds"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="org.h2.Driver" />
+		<property name="url" value="jdbc:h2:mem:colab" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+
+	<bean id="jdbcTemplate"
+		class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="ds"></property>
+	</bean>
+	
+</beans>
